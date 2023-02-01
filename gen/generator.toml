@@ -1,0 +1,8 @@
+[general]
+library_name = "c_questdb_client"
+output_file_path = "../src/QuestDB.jl"
+module_name = "QuestDB"
+print_using_CEnum = false
+extract_c_comment_style = "doxygen"
+jll_pkg_name = "c_questdb_client_jll"
+

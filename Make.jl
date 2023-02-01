@@ -26,9 +26,19 @@ function build()
     name = "questdb_client"
 
     ## TODO: There needs to be some OS-specific logic here to copy the
-    ##       correct library file to the correct location.
-    lib_prefix = "lib"  # TODO needs to be "" on Windows.
-    lib_suffix = ".so"  # Needs to be ".dll" on Windows; ".dylib" on Mac.
+    ## Correct library file to the correct location.
+
+    if Sys.iswindows()
+        lib_prefix = ""  # TODO needs to be "" on Windows.    
+        lib_suffix = ".dll"
+    elseif Sys.islinux()
+        lib_prefix = "lib" 
+        lib_suffix = ".so" 
+    elseif Sys.isapple()
+        lib_prefix = "lib" 
+        lib_suffix = ".dylib"
+    end
+    
     lib_name = lib_prefix * name * lib_suffix
     lib_path = joinpath(target_dir, lib_name)
 

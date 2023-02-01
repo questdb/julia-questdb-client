@@ -27,3 +27,6 @@ Manifest.toml
 src/*.so
 src/*.dylib
 src/*.dll
+
+gen/build
+gen/products

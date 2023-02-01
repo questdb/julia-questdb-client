@@ -10,11 +10,11 @@
 ```shell
 $ git clone https://github.com/questdb/julia-questdb-client.git julia-questdb-client
 $ cd julia-questdb-client
-$ julia make sync_submodule
+$ julia Make.jl sync_submodule
 ```
 
 # Building the Rust code and copying the dynamic lib
 
 ```shell
-$ julia make build
+$ julia Make.jl build
 ```
