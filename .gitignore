@@ -30,3 +30,4 @@ src/*.dll
 
 gen/build
 gen/products
+.DS_Store
