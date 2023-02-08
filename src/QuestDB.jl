@@ -85,10 +85,11 @@ function Sender(host, port, auth=nothing, tls=false)
         end
     );
 
-    column(name::String, column_value) = (                    
+    column(name::String, column_value::Union{String, Int64, Float64, Bool, Dates.Microsecond}) = (
+
         col_name = line_sender_column_name_assert(length(name), name);
-        column_pointer = Ref{line_sender_utf8}();
-               
+        column_pointer = Ref{line_sender_utf8}();        
+
         if (typeof(column_value) == String)            
             line_sender_utf8_init(column_pointer, length(column_value), column_value, err);                           
             line_sender_buffer_column_str(buffer, col_name, column_pointer[], err);
@@ -98,6 +99,9 @@ function Sender(host, port, auth=nothing, tls=false)
             line_sender_buffer_column_f64(buffer, col_name, column_value, err);                                        
         elseif (typeof(column_value) == Bool)
             line_sender_buffer_column_bool(buffer, col_name, column_value, err);                                                
+        elseif (typeof(column_value) == Microsecond)              
+            ts = convert(Int64, Dates.value(column_value));            
+            line_sender_buffer_column_ts(buffer, col_name, ts, err);                        
         else
             throw("Unsupported type: $(typeof(column_value))");        
         end;

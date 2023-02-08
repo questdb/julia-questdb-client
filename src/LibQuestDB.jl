@@ -24,7 +24,7 @@ Construct a UTF-8 object from UTF-8 encoded buffer and length. If the passed in 
 * `buf`:\\[in\\] UTF-8 encoded buffer.
 """
 function line_sender_utf8_assert(len, buf)
-    ccall((:line_sender_utf8_assert, c_questdb_client), line_sender_utf8, (Csize_t, Ptr{Cchar}), len, buf)
+    ccall((:line_sender_utf8_assert, libquestdb_client), line_sender_utf8, (Csize_t, Ptr{Cchar}), len, buf)
 end
 
 """
@@ -47,7 +47,7 @@ Construct a table name object from UTF-8 encoded buffer and length. If the passe
 * `buf`:\\[in\\] UTF-8 encoded buffer.
 """
 function line_sender_table_name_assert(len, buf)
-    ccall((:line_sender_table_name_assert, c_questdb_client), line_sender_table_name, (Csize_t, Ptr{Cchar}), len, buf)
+    ccall((:line_sender_table_name_assert, libquestdb_client), line_sender_table_name, (Csize_t, Ptr{Cchar}), len, buf)
 end
 
 """
@@ -70,7 +70,7 @@ Construct a column name object from UTF-8 encoded buffer and length. If the pass
 * `buf`:\\[in\\] UTF-8 encoded buffer.
 """
 function line_sender_column_name_assert(len, buf)
-    ccall((:line_sender_column_name_assert, c_questdb_client), line_sender_column_name, (Csize_t, Ptr{Cchar}), len, buf)
+    ccall((:line_sender_column_name_assert, libquestdb_client), line_sender_column_name, (Csize_t, Ptr{Cchar}), len, buf)
 end
 
 mutable struct line_sender_error end
@@ -97,7 +97,7 @@ end
 Error code categorizing the error.
 """
 function line_sender_error_get_code(arg1)
-    ccall((:line_sender_error_get_code, c_questdb_client), line_sender_error_code, (Ptr{line_sender_error},), arg1)
+    ccall((:line_sender_error_get_code, libquestdb_client), line_sender_error_code, (Ptr{line_sender_error},), arg1)
 end
 
 """
@@ -106,7 +106,7 @@ end
 UTF-8 encoded error message. Never returns NULL. The `len_out` argument is set to the number of bytes in the string. The string is NOT null-terminated.
 """
 function line_sender_error_msg(arg1, len_out)
-    ccall((:line_sender_error_msg, c_questdb_client), Ptr{Cchar}, (Ptr{line_sender_error}, Ptr{Csize_t}), arg1, len_out)
+    ccall((:line_sender_error_msg, libquestdb_client), Ptr{Cchar}, (Ptr{line_sender_error}, Ptr{Csize_t}), arg1, len_out)
 end
 
 """
@@ -115,7 +115,7 @@ end
 Clean up the error.
 """
 function line_sender_error_free(arg1)
-    ccall((:line_sender_error_free, c_questdb_client), Cvoid, (Ptr{line_sender_error},), arg1)
+    ccall((:line_sender_error_free, libquestdb_client), Cvoid, (Ptr{line_sender_error},), arg1)
 end
 
 """
@@ -132,7 +132,7 @@ Check the provided buffer is a valid UTF-8 encoded string.
 true on success, false on error.
 """
 function line_sender_utf8_init(str, len, buf, err_out) 
-    ccall((:line_sender_utf8_init, c_questdb_client), Bool, (Ptr{line_sender_utf8}, Csize_t, Ptr{Cchar}, Ptr{Ptr{line_sender_error}}), str, len, buf, err_out)
+    ccall((:line_sender_utf8_init, libquestdb_client), Bool, (Ptr{line_sender_utf8}, Csize_t, Ptr{Cchar}, Ptr{Ptr{line_sender_error}}), str, len, buf, err_out)
 end
 
 """
@@ -149,7 +149,7 @@ Check the provided buffer is a valid UTF-8 encoded string that can be used as a 
 true on success, false on error.
 """
 function line_sender_table_name_init(name, len, buf, err_out)
-    ccall((:line_sender_table_name_init, c_questdb_client), Bool, (Ptr{line_sender_table_name}, Csize_t, Ptr{Cchar}, Ptr{Ptr{line_sender_error}}), name, len, buf, err_out)
+    ccall((:line_sender_table_name_init, libquestdb_client), Bool, (Ptr{line_sender_table_name}, Csize_t, Ptr{Cchar}, Ptr{Ptr{line_sender_error}}), name, len, buf, err_out)
 end
 
 """
@@ -166,7 +166,7 @@ Check the provided buffer is a valid UTF-8 encoded string that can be used as a 
 true on success, false on error.
 """
 function line_sender_column_name_init(name, len, buf, err_out)
-    ccall((:line_sender_column_name_init, c_questdb_client), Bool, (Ptr{line_sender_column_name}, Csize_t, Ptr{Cchar}, Ptr{Ptr{line_sender_error}}), name, len, buf, err_out)
+    ccall((:line_sender_column_name_init, libquestdb_client), Bool, (Ptr{line_sender_column_name}, Csize_t, Ptr{Cchar}, Ptr{Ptr{line_sender_error}}), name, len, buf, err_out)
 end
 
 mutable struct line_sender_buffer end
@@ -178,7 +178,7 @@ mutable struct line_sender_buffer end
 Create a buffer for serializing ILP messages.
 """
 function line_sender_buffer_new()
-    ccall((:line_sender_buffer_new, c_questdb_client), Ptr{line_sender_buffer}, ())
+    ccall((:line_sender_buffer_new, libquestdb_client), Ptr{line_sender_buffer}, ())
 end
 
 
@@ -188,7 +188,7 @@ end
 Create a buffer for serializing ILP messages.
 """
 function line_sender_buffer_with_max_name_len(max_name_len)
-    ccall((:line_sender_buffer_with_max_name_len, c_questdb_client), Ptr{line_sender_buffer}, (Csize_t,), max_name_len)
+    ccall((:line_sender_buffer_with_max_name_len, libquestdb_client), Ptr{line_sender_buffer}, (Csize_t,), max_name_len)
 end
 
 """
@@ -197,7 +197,7 @@ end
 Release the buffer object.
 """
 function line_sender_buffer_free(buffer)
-    ccall((:line_sender_buffer_free, c_questdb_client), Cvoid, (Ptr{line_sender_buffer},), buffer)
+    ccall((:line_sender_buffer_free, libquestdb_client), Cvoid, (Ptr{line_sender_buffer},), buffer)
 end
 
 """
@@ -206,7 +206,7 @@ end
 Create a new copy of the buffer.
 """
 function line_sender_buffer_clone(buffer)
-    ccall((:line_sender_buffer_clone, c_questdb_client), Ptr{line_sender_buffer}, (Ptr{line_sender_buffer},), buffer)
+    ccall((:line_sender_buffer_clone, libquestdb_client), Ptr{line_sender_buffer}, (Ptr{line_sender_buffer},), buffer)
 end
 
 """
@@ -215,7 +215,7 @@ end
 Pre-allocate to ensure the buffer has enough capacity for at least the specified additional byte count. This may be rounded up. This does not allocate if such additional capacity is already satisfied. See: `capacity`.
 """
 function line_sender_buffer_reserve(buffer, additional)
-    ccall((:line_sender_buffer_reserve, c_questdb_client), Cvoid, (Ptr{line_sender_buffer}, Csize_t), buffer, additional)
+    ccall((:line_sender_buffer_reserve, libquestdb_client), Cvoid, (Ptr{line_sender_buffer}, Csize_t), buffer, additional)
 end
 
 """
@@ -224,7 +224,7 @@ end
 Get the current capacity of the buffer.
 """
 function line_sender_buffer_capacity(buffer)
-    ccall((:line_sender_buffer_capacity, c_questdb_client), Csize_t, (Ptr{line_sender_buffer},), buffer)
+    ccall((:line_sender_buffer_capacity, libquestdb_client), Csize_t, (Ptr{line_sender_buffer},), buffer)
 end
 
 """
@@ -233,7 +233,7 @@ end
 Mark a rewind point. This allows undoing accumulated changes to the buffer for one or more rows by calling `rewind_to_marker`. Any previous marker will be discarded. Once the marker is no longer needed, call `clear_marker`.
 """
 function line_sender_buffer_set_marker(buffer, err_out)
-    ccall((:line_sender_buffer_set_marker, c_questdb_client), Bool, (Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), buffer, err_out)
+    ccall((:line_sender_buffer_set_marker, libquestdb_client), Bool, (Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), buffer, err_out)
 end
 
 """
@@ -242,7 +242,7 @@ end
 Undo all changes since the last `set_marker` call. As a side-effect, this also clears the marker.
 """
 function line_sender_buffer_rewind_to_marker(buffer, err_out)
-    ccall((:line_sender_buffer_rewind_to_marker, c_questdb_client), Bool, (Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), buffer, err_out)
+    ccall((:line_sender_buffer_rewind_to_marker, libquestdb_client), Bool, (Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), buffer, err_out)
 end
 
 """
@@ -251,7 +251,7 @@ end
 Discard the marker.
 """
 function line_sender_buffer_clear_marker(buffer)
-    ccall((:line_sender_buffer_clear_marker, c_questdb_client), Cvoid, (Ptr{line_sender_buffer},), buffer)
+    ccall((:line_sender_buffer_clear_marker, libquestdb_client), Cvoid, (Ptr{line_sender_buffer},), buffer)
 end
 
 """
@@ -260,7 +260,7 @@ end
 Remove all accumulated data and prepare the buffer for new lines. This does not affect the buffer's capacity.
 """
 function line_sender_buffer_clear(buffer)
-    ccall((:line_sender_buffer_clear, c_questdb_client), Cvoid, (Ptr{line_sender_buffer},), buffer)
+    ccall((:line_sender_buffer_clear, libquestdb_client), Cvoid, (Ptr{line_sender_buffer},), buffer)
 end
 
 """
@@ -269,7 +269,7 @@ end
 Number of bytes in the accumulated buffer.
 """
 function line_sender_buffer_size(buffer)
-    ccall((:line_sender_buffer_size, c_questdb_client), Csize_t, (Ptr{line_sender_buffer},), buffer)
+    ccall((:line_sender_buffer_size, libquestdb_client), Csize_t, (Ptr{line_sender_buffer},), buffer)
 end
 
 """
@@ -284,7 +284,7 @@ Peek into the accumulated buffer that is to be sent out at the next `flush`.
 UTF-8 encoded buffer. The buffer is not nul-terminated.
 """
 function line_sender_buffer_peek(buffer, len_out)
-    ccall((:line_sender_buffer_peek, c_questdb_client), Ptr{Cchar}, (Ptr{line_sender_buffer}, Ptr{Csize_t}), buffer, len_out)
+    ccall((:line_sender_buffer_peek, libquestdb_client), Ptr{Cchar}, (Ptr{line_sender_buffer}, Ptr{Csize_t}), buffer, len_out)
 end
 
 """
@@ -297,7 +297,7 @@ Start batching the next row of input for the named table.
 * `name`:\\[in\\] Table name.
 """
 function line_sender_buffer_table(buffer, name, err_out)
-    ccall((:line_sender_buffer_table, c_questdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_table_name, Ptr{Ptr{line_sender_error}}), buffer, name, err_out)
+    ccall((:line_sender_buffer_table, libquestdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_table_name, Ptr{Ptr{line_sender_error}}), buffer, name, err_out)
 end
 
 """
@@ -314,7 +314,7 @@ Append a value for a SYMBOL column. Symbol columns must always be written before
 true on success, false on error.
 """
 function line_sender_buffer_symbol(buffer, name, value, err_out)
-    ccall((:line_sender_buffer_symbol, c_questdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, line_sender_utf8, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
+    ccall((:line_sender_buffer_symbol, libquestdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, line_sender_utf8, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
 end
 
 """
@@ -331,7 +331,7 @@ Append a value for a BOOLEAN column.
 true on success, false on error.
 """
 function line_sender_buffer_column_bool(buffer, name, value, err_out)
-    ccall((:line_sender_buffer_column_bool, c_questdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, Bool, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
+    ccall((:line_sender_buffer_column_bool, libquestdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, Bool, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
 end
 
 """
@@ -348,7 +348,7 @@ Append a value for a LONG column.
 true on success, false on error.
 """
 function line_sender_buffer_column_i64(buffer, name, value, err_out)
-    ccall((:line_sender_buffer_column_i64, c_questdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, Int64, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
+    ccall((:line_sender_buffer_column_i64, libquestdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, Int64, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
 end
 
 """
@@ -365,7 +365,7 @@ Append a value for a DOUBLE column.
 true on success, false on error.
 """
 function line_sender_buffer_column_f64(buffer, name, value, err_out)
-    ccall((:line_sender_buffer_column_f64, c_questdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, Cdouble, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
+    ccall((:line_sender_buffer_column_f64, libquestdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, Cdouble, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
 end
 
 """
@@ -382,7 +382,7 @@ Append a value for a STRING column.
 true on success, false on error.
 """
 function line_sender_buffer_column_str(buffer, name, value, err_out)
-    ccall((:line_sender_buffer_column_str, c_questdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, line_sender_utf8, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
+    ccall((:line_sender_buffer_column_str, libquestdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, line_sender_utf8, Ptr{Ptr{line_sender_error}}), buffer, name, value, err_out)
 end
 
 """
@@ -399,7 +399,7 @@ Append a value for a TIMESTAMP column.
 true on success, false on error.
 """
 function line_sender_buffer_column_ts(buffer, name, micros, err_out)
-    ccall((:line_sender_buffer_column_ts, c_questdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, Int64, Ptr{Ptr{line_sender_error}}), buffer, name, micros, err_out)
+    ccall((:line_sender_buffer_column_ts, libquestdb_client), Bool, (Ptr{line_sender_buffer}, line_sender_column_name, Int64, Ptr{Ptr{line_sender_error}}), buffer, name, micros, err_out)
 end
 
 """
@@ -417,7 +417,7 @@ After this call, you can start batching the next row by calling `table` again, o
 true on success, false on error.
 """
 function line_sender_buffer_at(buffer, epoch_nanos, err_out)
-    ccall((:line_sender_buffer_at, c_questdb_client), Bool, (Ptr{line_sender_buffer}, Int64, Ptr{Ptr{line_sender_error}}), buffer, epoch_nanos, err_out)
+    ccall((:line_sender_buffer_at, libquestdb_client), Bool, (Ptr{line_sender_buffer}, Int64, Ptr{Ptr{line_sender_error}}), buffer, epoch_nanos, err_out)
 end
 
 """
@@ -434,7 +434,7 @@ After this call, you can start batching the next row by calling `table` again, o
 true on success, false on error.
 """
 function line_sender_buffer_at_now(buffer, err_out)
-    ccall((:line_sender_buffer_at_now, c_questdb_client), Bool, (Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), buffer, err_out)    
+    ccall((:line_sender_buffer_at_now, libquestdb_client), Bool, (Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), buffer, err_out)    
 end
 
 mutable struct line_sender end
@@ -451,7 +451,7 @@ A new set of options for a line sender connection.
 * `port`:\\[in\\] The QuestDB database port.
 """
 function line_sender_opts_new(host, port)
-    ccall((:line_sender_opts_new, c_questdb_client), Ptr{line_sender_opts}, (line_sender_utf8, UInt16), host, port)
+    ccall((:line_sender_opts_new, libquestdb_client), Ptr{line_sender_opts}, (line_sender_utf8, UInt16), host, port)
 end
 
 """
@@ -464,7 +464,7 @@ A new set of options for a line sender connection.
 * `port`:\\[in\\] The QuestDB database port as service name.
 """
 function line_sender_opts_new_service(host, port)    
-    ccall((:line_sender_opts_new_service, c_questdb_client), Ptr{line_sender_opts}, (line_sender_utf8, line_sender_utf8), host, port)    
+    ccall((:line_sender_opts_new_service, libquestdb_client), Ptr{line_sender_opts}, (line_sender_utf8, line_sender_utf8), host, port)    
 end
 
 """
@@ -473,7 +473,7 @@ end
 Select local outbound interface.
 """
 function line_sender_opts_net_interface(opts, net_interface)
-    ccall((:line_sender_opts_net_interface, c_questdb_client), Cvoid, (Ptr{line_sender_opts}, line_sender_utf8), opts, net_interface)
+    ccall((:line_sender_opts_net_interface, libquestdb_client), Cvoid, (Ptr{line_sender_opts}, line_sender_utf8), opts, net_interface)
 end
 
 """
@@ -488,7 +488,7 @@ Authentication Parameters.
 * `pub_key_y`:\\[in\\] Public key Y coordinate. AKA "y".
 """
 function line_sender_opts_auth(opts, key_id, priv_key, pub_key_x, pub_key_y)
-    ccall((:line_sender_opts_auth, c_questdb_client), Cvoid, (Ptr{line_sender_opts}, line_sender_utf8, line_sender_utf8, line_sender_utf8, line_sender_utf8), opts, key_id, priv_key, pub_key_x, pub_key_y)
+    ccall((:line_sender_opts_auth, libquestdb_client), Cvoid, (Ptr{line_sender_opts}, line_sender_utf8, line_sender_utf8, line_sender_utf8, line_sender_utf8), opts, key_id, priv_key, pub_key_x, pub_key_y)
 end
 
 """
@@ -497,7 +497,7 @@ end
 Enable full connection encryption via TLS. The connection will accept certificates by well-known certificate authorities as per the "webpki-roots" Rust crate.
 """
 function line_sender_opts_tls(opts)
-    ccall((:line_sender_opts_tls, c_questdb_client), Cvoid, (Ptr{line_sender_opts},), opts)
+    ccall((:line_sender_opts_tls, libquestdb_client), Cvoid, (Ptr{line_sender_opts},), opts)
 end
 
 """
@@ -506,7 +506,7 @@ end
 Enable full connection encryption via TLS. The connection will accept certificates by the specified certificate authority file.
 """
 function line_sender_opts_tls_ca(opts, ca_path)
-    ccall((:line_sender_opts_tls_ca, c_questdb_client), Cvoid, (Ptr{line_sender_opts}, line_sender_utf8), opts, ca_path)
+    ccall((:line_sender_opts_tls_ca, libquestdb_client), Cvoid, (Ptr{line_sender_opts}, line_sender_utf8), opts, ca_path)
 end
 
 """
@@ -515,7 +515,7 @@ end
 Enable TLS whilst dangerously accepting any certificate as valid. This should only be used for debugging. Consider using calling "tls\\_ca" instead.
 """
 function line_sender_opts_tls_insecure_skip_verify(opts)
-    ccall((:line_sender_opts_tls_insecure_skip_verify, c_questdb_client), Cvoid, (Ptr{line_sender_opts},), opts)
+    ccall((:line_sender_opts_tls_insecure_skip_verify, libquestdb_client), Cvoid, (Ptr{line_sender_opts},), opts)
 end
 
 """
@@ -524,7 +524,7 @@ end
 Configure how long to wait for messages from the QuestDB server during the TLS handshake and authentication process. The default is 15 seconds.
 """
 function line_sender_opts_read_timeout(opts, timeout_millis)
-    ccall((:line_sender_opts_read_timeout, c_questdb_client), Cvoid, (Ptr{line_sender_opts}, UInt64), opts, timeout_millis)
+    ccall((:line_sender_opts_read_timeout, libquestdb_client), Cvoid, (Ptr{line_sender_opts}, UInt64), opts, timeout_millis)
 end
 
 """
@@ -533,7 +533,7 @@ end
 Duplicate the opts object. Both old and new objects will have to be freed.
 """
 function line_sender_opts_clone(opts)
-    ccall((:line_sender_opts_clone, c_questdb_client), Ptr{line_sender_opts}, (Ptr{line_sender_opts},), opts)
+    ccall((:line_sender_opts_clone, libquestdb_client), Ptr{line_sender_opts}, (Ptr{line_sender_opts},), opts)
 end
 
 """
@@ -542,7 +542,7 @@ end
 Release the opts object.
 """
 function line_sender_opts_free(opts)
-    ccall((:line_sender_opts_free, c_questdb_client), Cvoid, (Ptr{line_sender_opts},), opts)
+    ccall((:line_sender_opts_free, libquestdb_client), Cvoid, (Ptr{line_sender_opts},), opts)
 end
 
 """
@@ -558,7 +558,7 @@ Synchronously connect to the QuestDB database. The connection should be accessed
 * `opts`:\\[in\\] Options for the connection.
 """
 function line_sender_connect(opts, err_out)        
-    ccall((:line_sender_connect, c_questdb_client), Ptr{line_sender}, (Ptr{line_sender_opts}, Ptr{Ptr{line_sender_error}}), opts, err_out)    
+    ccall((:line_sender_connect, libquestdb_client), Ptr{line_sender}, (Ptr{line_sender_opts}, Ptr{Ptr{line_sender_error}}), opts, err_out)    
 end
 
 
@@ -577,7 +577,7 @@ The buffer will be automatically cleared, ready for re-use. If instead you want 
 true on success, false on error.
 """
 function line_sender_flush(sender, buffer, err_out)
-    ccall((:line_sender_flush, c_questdb_client), Bool, (Ptr{line_sender}, Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), sender, buffer, err_out)
+    ccall((:line_sender_flush, libquestdb_client), Bool, (Ptr{line_sender}, Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), sender, buffer, err_out)
 end
 
 """
@@ -594,7 +594,7 @@ The buffer will left untouched and must be cleared before re-use. To send and cl
 true on success, false on error.
 """
 function line_sender_flush_and_keep(sender, buffer, err_out)
-    ccall((:line_sender_flush_and_keep, c_questdb_client), Bool, (Ptr{line_sender}, Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), sender, buffer, err_out)
+    ccall((:line_sender_flush_and_keep, libquestdb_client), Bool, (Ptr{line_sender}, Ptr{line_sender_buffer}, Ptr{Ptr{line_sender_error}}), sender, buffer, err_out)
 end
 
 """
@@ -608,7 +608,7 @@ Check if an error occurred previously and the sender must be closed.
 true if an error occurred with a sender and it must be closed.
 """
 function line_sender_must_close(sender)
-    ccall((:line_sender_must_close, c_questdb_client), Bool, (Ptr{line_sender},), sender)
+    ccall((:line_sender_must_close, libquestdb_client), Bool, (Ptr{line_sender},), sender)
 end
 
 """
@@ -620,7 +620,7 @@ Close the connection. Does not flush. Non-idempotent.
 * `sender`:\\[in\\] Line sender object.
 """
 function line_sender_close(sender)
-    ccall((:line_sender_close, c_questdb_client), Cvoid, (Ptr{line_sender},), sender)
+    ccall((:line_sender_close, libquestdb_client), Cvoid, (Ptr{line_sender},), sender)
 end
 
 export line_sender_utf8, line_sender_utf8_assert, line_sender_utf8_init, line_sender_utf8_init, line_sender_table_name, line_sender_table_name_assert, line_sender_column_name, line_sender_column_name_assert, line_sender_error, line_sender_error_code, line_sender_error_get_code, line_sender_error_msg, line_sender_error_free, line_sender_utf8_init, line_sender_table_name_init, line_sender_column_name_init, line_sender_buffer_new, line_sender_buffer_with_max_name_len, line_sender_buffer_free, line_sender_buffer_clone, line_sender_buffer_reserve, line_sender_buffer_capacity, line_sender_buffer_set_marker, line_sender_buffer_rewind_to_marker, line_sender_buffer_clear_marker, line_sender_buffer_clear, line_sender_buffer_size, line_sender_buffer_peek, line_sender_buffer_table, line_sender_buffer_symbol, line_sender_buffer_column_bool, line_sender_buffer_column_i64, line_sender_buffer_column_f64, line_sender_buffer_column_str, line_sender_buffer_column_ts, line_sender_buffer_at, line_sender_buffer_at_now, line_sender, line_sender_opts, line_sender_opts_new, line_sender_opts_new_service, line_sender_opts_net_interface, line_sender_opts_auth, line_sender_opts_tls, line_sender_opts_tls_ca, line_sender_opts_tls_insecure_skip_verify, line_sender_opts_read_timeout, line_sender_opts_clone, line_sender_opts_free, line_sender_connect, line_sender_flush, line_sender_flush_and_keep, line_sender_must_close, line_sender_close

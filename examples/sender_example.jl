@@ -12,16 +12,18 @@ auth = (
 sender = Sender("localhost", "9009", auth)
 
 @time try                  
-    for i in 1:20
-        ts = Dates.Nanosecond(1674983677000000000)
+    for i in 1:1_000_000
+        ts = Dates.Microsecond(1674983677000000)
+        ts_at = Dates.Nanosecond(1423299927000000000)
         sender.table("test_table")
         sender.symbol("first_symbol_1", "first_symbol")
         sender.column("column_a", "value_a")
         sender.column("column_b_int", 1)        
         sender.column("column_c_float", 1.1)
         sender.column("column_d_bool", true)        
+        sender.column("timestamp_column", ts)
         #sender.at_now()
-        sender.at(ts)
+        sender.at(ts_at)
     end
     sender.flush()
 catch e    
