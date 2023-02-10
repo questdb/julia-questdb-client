@@ -1,9 +1,9 @@
 # see documentation at https://juliadocs.github.io/Documenter.jl/stable/
-
-using Documenter, QuestDB
+push!(LOAD_PATH, "../src/")
+using Documenter, .QuestDB, .LibQuestDB
 
 makedocs(
-    modules = [QuestDB],
+    modules = [QuestDB, LibQuestDB],
     format = Documenter.HTML(; prettyurls = get(ENV, "CI", nothing) == "true"),
     authors = "Brandon Escamilla",
     sitename = "QuestDB.jl",

@@ -1,5 +1,7 @@
 [deps]
+CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+c_questdb_client_jll = "49a0df60-3d80-5428-85ce-5c0f24fd7b67"
 
 [compat]
 Documenter = "~0.27"
