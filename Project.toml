@@ -1,7 +1,7 @@
 name = "QuestDB"
 uuid = "c409e7dc-95dd-4f76-9030-daa6b84467ba"
 authors = ["Brandon Escamilla <brandon.escamilla@outlook.com>"]
-version = "0.0.1"
+version = "0.1.0"
 
 [deps]
 CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
