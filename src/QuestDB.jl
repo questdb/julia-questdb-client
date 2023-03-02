@@ -69,8 +69,9 @@ mutable struct Sender
     opts::Ref{line_sender_opts}    
     err::Ref{Ptr{line_sender_error}}    
     sender::Ref{line_sender}
-    auth::Bool    
-    function Sender(host::String, port::Int, auth=nothing, tls::Bool=false)                        
+    auth::Bool
+    
+    function Sender(host::String="localhost", port::Int=9009; auth=nothing, tls::Bool=false)
         err = Ref{Ptr{line_sender_error}}(C_NULL)
         opts = Ref{line_sender_opts}()
         sender = Ref{line_sender}()
@@ -89,10 +90,10 @@ mutable struct Sender
 
         if (is_host_ok)                                    
             opts = line_sender_opts_new(host_utf8[], port[])                        
-
-            if (tls)
+          
+            if (tls)                
                 line_sender_opts_tls(opts);
-            end 
+            end             
 
             if (auth !== nothing)
                 println("Authenticating...")
@@ -113,7 +114,7 @@ mutable struct Sender
             error_handler(sender, buffer, err);           
         end;
                     
-        s = new(host_utf8, port, key_id_utf8, priv_key_utf8, pub_key_x_utf8, pub_key_y_utf8, buffer, opts, err, sender, auth !== nothing)               
+        s = new(host_utf8, port, key_id_utf8, priv_key_utf8, pub_key_x_utf8, pub_key_y_utf8, buffer, opts, err, sender, auth !== nothing)
         return s
     end
 end
@@ -142,6 +143,7 @@ function error_handler(sender::Ref{line_sender}, buffer::Ptr{line_sender_buffer}
     code = line_sender_error_get_code(err[]) 
     len = Ref{Csize_t}(100)
     message = line_sender_error_msg(err[], len)    
+    println(unsafe_string(message, len[]))
     
     if (code == 0)        
         error_message = "Error: Could not resolve address, Message: $(unsafe_string(message, len[]))"             

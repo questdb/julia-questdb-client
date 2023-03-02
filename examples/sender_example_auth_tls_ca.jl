@@ -2,7 +2,14 @@ using .QuestDB
 using BenchmarkTools
 using Dates
 
-sender = Sender("localhost", 9009)
+auth = (
+    "testUser1",                                    # kid
+    "5UjEMuA0Pj5pjK8a-fa24dyIf-Es5mYny3oE_Wmus48",  # d
+    "fLKYEaoEb9lrn3nkwLDA-M_xnuFOdSt9y0Z7_vWSHLU",  # x
+    "Dt5tbS1dEDMSYfym3fgMv0B99szno-dFc1rYF9t0aac"   # y
+)  
+
+sender = Sender("localhost", 9009, auth=auth, tls=true, ca_path="path/to/ca.pem")
 
 #TODO: check it out how to do the auto_flushing
 #TODO: How to close the sender 
