@@ -1,0 +1,7 @@
+target
+build
+.vs
+.vscode
+questdb-rs/Cargo.lock
+include/questdb/ilp/line_sender.gen.h
+cython/questdb/ilp/line_sender.pxd

@@ -1,0 +1,1 @@
+dot -Tsvg -o seq.svg seq.dot
