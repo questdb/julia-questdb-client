@@ -9,14 +9,11 @@ auth = (
     "Dt5tbS1dEDMSYfym3fgMv0B99szno-dFc1rYF9t0aac"   # y
 )  
 
-# HTTPS should be working in the host
-sender = Sender("localhost", 9009, auth=auth, tls=true)
+sender = Sender("testing.domain.com", 9009, auth=auth, tls=true)
 
-#TODO: check it out how to do the auto_flushing
-#TODO: How to close the sender 
 @time try                  
-    for i in 1:300_000
-        sender.table("testing_OOP3")
+    for i in 1:3000000
+        sender.table("testing_OOP11")
         sender.symbol("first_symbol", "first_symbol")
         sender.column("column_a", "value_a")
         sender.column("column_b_int", 1)
@@ -33,4 +30,3 @@ catch e
 finally
     sender.close()
 end
-

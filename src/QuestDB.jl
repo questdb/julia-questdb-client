@@ -70,8 +70,10 @@ mutable struct Sender
     err::Ref{Ptr{line_sender_error}}    
     sender::Ref{line_sender}
     auth::Bool
+    tls::Union{Bool, String}
+    read_timeout::Union{Int, Nothing}
     
-    function Sender(host::String="localhost", port::Int=9009; auth=nothing, tls::Bool=false)
+    function Sender(host::String="localhost", port::Int=9009; auth=nothing, tls::Union{String, Bool}=false, read_timeout::Union{Int, Nothing}=nothing)
         err = Ref{Ptr{line_sender_error}}(C_NULL)
         opts = Ref{line_sender_opts}()
         sender = Ref{line_sender}()
@@ -82,6 +84,7 @@ mutable struct Sender
         priv_key_utf8 = Ref{line_sender_utf8}()
         pub_key_x_utf8 = Ref{line_sender_utf8}()
         pub_key_y_utf8 = Ref{line_sender_utf8}()
+        ca_utf8 = Ref{line_sender_utf8}()
 
         is_host_ok = line_sender_utf8_init(host_utf8, length(host), host, err)    
 
@@ -90,10 +93,28 @@ mutable struct Sender
 
         if (is_host_ok)                                    
             opts = line_sender_opts_new(host_utf8[], port[])                        
-          
-            if (tls)                
-                line_sender_opts_tls(opts);
-            end             
+                                                    
+            if (tls !== false)                                
+                if (tls isa Bool)
+                    line_sender_opts_tls(opts);                                                                    
+                elseif tls isa String
+                    if (tls == "insecure_skip_verify")
+                        line_sender_opts_tls_insecure_skip_verify(opts);                                            
+                    elseif ispath(tls)                        
+                        line_sender_utf8_init(ca_utf8, length(tls), tls, err)
+                        line_sender_opts_tls_ca(opts, ca_utf8[]);                                            
+                    else
+                        line_sender_utf8_init(ca_utf8, length(tls), tls, err)
+                        line_sender_opts_tls_ca(opts, ca_utf8[]);                        
+                    end                                                                        
+                else
+                    throw("tls must be a bool, a path or string pointing to CA file or insecure_skip_verify")
+                end
+            end
+
+            if read_timeout !== nothing
+                line_sender_opts_read_timeout(opts, read_timeout)
+            end
 
             if (auth !== nothing)
                 println("Authenticating...")
@@ -114,7 +135,7 @@ mutable struct Sender
             error_handler(sender, buffer, err);           
         end;
                     
-        s = new(host_utf8, port, key_id_utf8, priv_key_utf8, pub_key_x_utf8, pub_key_y_utf8, buffer, opts, err, sender, auth !== nothing)
+        s = new(host_utf8, port, key_id_utf8, priv_key_utf8, pub_key_x_utf8, pub_key_y_utf8, buffer, opts, err, sender, auth !== nothing, tls !== false, read_timeout !== nothing)
         return s
     end
 end

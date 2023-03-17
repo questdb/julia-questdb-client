@@ -8,7 +8,9 @@ This package provides a Julia client for [QuestDB](https://questdb.io/), a high-
 The package can be installed using the Julia package manager:
 
 ```julia
-] add QuestDB
+julia> "]"
+pkg> add QuestDB
+```
 ```
 
 or 

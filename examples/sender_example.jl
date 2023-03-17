@@ -7,8 +7,8 @@ sender = Sender("localhost", 9009)
 #TODO: check it out how to do the auto_flushing
 #TODO: How to close the sender 
 @time try                  
-    for i in 1:300_000
-        sender.table("testing_OOP3")
+    for i in 1:100
+        sender.table("testing_OOP11")
         sender.symbol("first_symbol", "first_symbol")
         sender.column("column_a", "value_a")
         sender.column("column_b_int", 1)
