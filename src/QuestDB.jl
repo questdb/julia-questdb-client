@@ -39,6 +39,8 @@ end
     uses TLS encryption. If `auth` is provided, authentication will be attempted using the given
     `auth` credentials.
 
+    Auto flushing is enabled automatically, the init capacity by default is 64kb.
+
     ## Parameters
     * `host`: Hostname to connect to.
     * `port`: Port to connect to.
@@ -66,6 +68,7 @@ mutable struct Sender
     pub_key_x_utf8::Ref{line_sender_utf8}
     pub_key_y_utf8::Ref{line_sender_utf8}
     buffer::Ref{line_sender_buffer}
+    init_capacity::Ref{UInt32}
     opts::Ref{line_sender_opts}    
     err::Ref{Ptr{line_sender_error}}    
     sender::Ref{line_sender}
@@ -73,11 +76,12 @@ mutable struct Sender
     tls::Union{Bool, String}
     read_timeout::Union{Int, Nothing}
     
-    function Sender(host::String="localhost", port::Int=9009; auth=nothing, tls::Union{String, Bool}=false, read_timeout::Union{Int, Nothing}=nothing)
+    function Sender(host::String="localhost", port::Int=9009; auth=nothing, tls::Union{String, Bool}=false, read_timeout::Union{Int, Nothing}=nothing, init_capacity::Int=64*1024)
         err = Ref{Ptr{line_sender_error}}(C_NULL)
         opts = Ref{line_sender_opts}()
         sender = Ref{line_sender}()
         port = Ref{UInt16}(port)
+        init_capacity = Ref{UInt32}(init_capacity)
         buffer = Ref{line_sender_buffer}()
         host_utf8 = Ref{line_sender_utf8}()        
         key_id_utf8 = Ref{line_sender_utf8}()
@@ -88,8 +92,11 @@ mutable struct Sender
 
         is_host_ok = line_sender_utf8_init(host_utf8, length(host), host, err)    
 
+        
         global buffer = line_sender_buffer_new();
-        line_sender_buffer_reserve(buffer, 64 * 1024);        
+        println("init_capacity: ", init_capacity[])
+        line_sender_buffer_reserve(buffer, init_capacity[]);                
+
 
         if (is_host_ok)                                    
             opts = line_sender_opts_new(host_utf8[], port[])                        
@@ -135,7 +142,7 @@ mutable struct Sender
             error_handler(sender, buffer, err);           
         end;
                     
-        s = new(host_utf8, port, key_id_utf8, priv_key_utf8, pub_key_x_utf8, pub_key_y_utf8, buffer, opts, err, sender, auth !== nothing, tls !== false, read_timeout !== nothing)
+        s = new(host_utf8, port, key_id_utf8, priv_key_utf8, pub_key_x_utf8, pub_key_y_utf8, buffer, init_capacity, opts, err, sender, auth !== nothing, tls !== false, read_timeout !== nothing)
         return s
     end
 end
@@ -214,6 +221,12 @@ end
 """
 function(table::Table)(name::String)
     sender = table.sender
+    buffer_size = line_sender_buffer_size(sender.buffer)
+    buffer_capacity = capacity(sender)    
+    if (buffer_size >= (buffer_capacity-1e3))        
+        sender.flush()                
+    end
+
     table_name = line_sender_table_name_assert(length(name), name);                                         
     line_sender_buffer_table(sender.buffer, table_name, sender.err);                        
     
@@ -325,7 +338,8 @@ end
 """
 function(at::At)(ts::Dates.Nanosecond)    
     sender = at.sender
-    ts = convert(Int64, Dates.value(ts));        
+    ts = convert(Int64, Dates.value(ts));      
+    
     line_sender_buffer_at(sender.buffer, ts, sender.err);       
 
     if (sender.err[] != C_NULL)
@@ -370,8 +384,7 @@ end
     * The buffer is flushed automatically when the `Sender` object is garbage collected.
     * The buffer is flushed automatically when the `Sender` object is closed.
 """
-function(flush::Flush)()
-    println("Flushing...");
+function(flush::Flush)()    
     sender = flush.sender
     line_sender_flush(sender.sender, sender.buffer, sender.err);    
     if sender.err[] != C_NULL          
