@@ -65,18 +65,18 @@ mutable struct Sender
     priv_key_utf8::Ref{line_sender_utf8}
     pub_key_x_utf8::Ref{line_sender_utf8}
     pub_key_y_utf8::Ref{line_sender_utf8}
-    buffer::Ref{line_sender_buffer}
+    buffer::Ptr{line_sender_buffer}
     opts::Ref{line_sender_opts}
     err::Ref{Ptr{line_sender_error}}
-    sender::Ref{line_sender}
+    sender::Ptr{line_sender}
     auth::Bool
 
     function Sender(host::String="localhost", port::Int=9009; auth=nothing, tls::Bool=false, init_capacity::Int=128 * 1024)
         err = Ref{Ptr{line_sender_error}}(C_NULL)
         opts = Ref{line_sender_opts}()
-        sender = Ref{line_sender}()
+        sender = C_NULL
         port = Ref{UInt16}(port)
-        buffer = Ref{line_sender_buffer}()
+        buffer = C_NULL
         host_utf8 = Ref{line_sender_utf8}()
         key_id_utf8 = Ref{line_sender_utf8}()
         priv_key_utf8 = Ref{line_sender_utf8}()
@@ -85,8 +85,8 @@ mutable struct Sender
 
         is_host_ok = line_sender_utf8_init(host_utf8, length(host), host, err)
 
-        buffer[] = line_sender_buffer_new()
-        line_sender_buffer_reserve(buffer[], init_capacity)
+        buffer = line_sender_buffer_new()
+        line_sender_buffer_reserve(buffer, init_capacity)
 
         if (is_host_ok)
             opts = line_sender_opts_new(host_utf8[], port[])
@@ -104,7 +104,7 @@ mutable struct Sender
                 line_sender_opts_auth(opts, key_id_utf8[], priv_key_utf8[], pub_key_x_utf8[], pub_key_y_utf8[])
             end
 
-            global sender = line_sender_connect(opts, err)
+            sender = line_sender_connect(opts, err)
             line_sender_opts_free(opts)
 
             if (sender == C_NULL)
@@ -118,11 +118,11 @@ mutable struct Sender
 
         # Register finalizer to clean up C resources
         finalizer(s) do sender_obj
-            if sender_obj.buffer[] != C_NULL
-                line_sender_buffer_free(sender_obj.buffer[])
+            if sender_obj.buffer != C_NULL
+                line_sender_buffer_free(sender_obj.buffer)
             end
-            if sender_obj.sender[] != C_NULL
-                line_sender_close(sender_obj.sender[])
+            if sender_obj.sender != C_NULL
+                line_sender_close(sender_obj.sender)
             end
         end
 
@@ -150,7 +150,7 @@ function Base.getproperty(s::Sender, f::Base.Symbol)
     return getfield(s, f)
 end
 
-function error_handler(sender::Ref{line_sender}, buffer::Ptr{line_sender_buffer}, err::Ref{Ptr{line_sender_error}})
+function error_handler(sender::Ptr{line_sender}, buffer::Ptr{line_sender_buffer}, err::Ref{Ptr{line_sender_error}})
     code = line_sender_error_get_code(err[])
     len = Ref{Csize_t}(100)
     message = line_sender_error_msg(err[], len)
@@ -378,15 +378,15 @@ function (close::Close)()
     sender = close.sender
 
     # Free buffer if not already freed
-    if sender.buffer[] != C_NULL
-        line_sender_buffer_free(sender.buffer[])
-        sender.buffer[] = C_NULL
+    if sender.buffer != C_NULL
+        line_sender_buffer_free(sender.buffer)
+        sender.buffer = C_NULL
     end
 
     # Close sender connection
-    if sender.sender[] != C_NULL
-        line_sender_close(sender.sender[])
-        sender.sender[] = C_NULL
+    if sender.sender != C_NULL
+        line_sender_close(sender.sender)
+        sender.sender = C_NULL
     end
 end
 
