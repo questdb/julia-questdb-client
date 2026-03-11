@@ -177,8 +177,12 @@ function error_handler(sender::Ptr{line_sender}, buffer::Ptr{line_sender_buffer}
     end
 
     line_sender_error_free(err[])
-    line_sender_buffer_free(buffer)
-    line_sender_close(sender)
+    if buffer != C_NULL
+        line_sender_buffer_free(buffer)
+    end
+    if sender != C_NULL
+        line_sender_close(sender)
+    end
     throw(ErrorException(error_message))
 end
 
