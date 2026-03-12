@@ -120,9 +120,11 @@ mutable struct Sender
         finalizer(s) do sender_obj
             if sender_obj.buffer != C_NULL
                 line_sender_buffer_free(sender_obj.buffer)
+                sender_obj.buffer = C_NULL
             end
             if sender_obj.sender != C_NULL
                 line_sender_close(sender_obj.sender)
+                sender_obj.sender = C_NULL
             end
         end
 
