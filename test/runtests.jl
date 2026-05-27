@@ -1,14 +1,12 @@
-using .QuestDB
-using .LibQuestDB
+using QuestDB
 using Dates
-using c_questdb_client_jll
 using Test
 include("mock_server.jl")
 
 # test QuestDB.jl functions
 @testset "Sender testing" begin    
     server = py"Server"()        
-    sender = Sender("localhost", string(server.port))
+    sender = Sender("localhost", server.port)
     server.accept()
     
     # Row 1

@@ -3,7 +3,7 @@ module QuestDB
 
 include("LibQuestDB.jl")
 
-using .LibQuestDB 
+using .LibQuestDB
 using Dates
 
 struct Table{T}
@@ -58,70 +58,83 @@ end
     ## Returns        
     Sender object that can be used to send data.
 """
-mutable struct Sender        
+mutable struct Sender
     host_utf8::Ref{line_sender_utf8}
     port::Ref{UInt16}
     key_id_utf8::Ref{line_sender_utf8}
     priv_key_utf8::Ref{line_sender_utf8}
     pub_key_x_utf8::Ref{line_sender_utf8}
     pub_key_y_utf8::Ref{line_sender_utf8}
-    buffer::Ref{line_sender_buffer}
-    opts::Ref{line_sender_opts}    
-    err::Ref{Ptr{line_sender_error}}    
-    sender::Ref{line_sender}
+    buffer::Ptr{line_sender_buffer}
+    opts::Ref{line_sender_opts}
+    err::Ref{Ptr{line_sender_error}}
+    sender::Ptr{line_sender}
     auth::Bool
-    
-    function Sender(host::String="localhost", port::Int=9009; auth=nothing, tls::Bool=false)
+
+    function Sender(host::String="localhost", port::Int=9009; auth=nothing, tls::Bool=false, init_capacity::Int=128 * 1024)
         err = Ref{Ptr{line_sender_error}}(C_NULL)
         opts = Ref{line_sender_opts}()
-        sender = Ref{line_sender}()
+        sender = C_NULL
         port = Ref{UInt16}(port)
-        buffer = Ref{line_sender_buffer}()
-        host_utf8 = Ref{line_sender_utf8}()        
+        buffer = C_NULL
+        host_utf8 = Ref{line_sender_utf8}()
         key_id_utf8 = Ref{line_sender_utf8}()
         priv_key_utf8 = Ref{line_sender_utf8}()
         pub_key_x_utf8 = Ref{line_sender_utf8}()
         pub_key_y_utf8 = Ref{line_sender_utf8}()
 
-        is_host_ok = line_sender_utf8_init(host_utf8, length(host), host, err)    
+        is_host_ok = line_sender_utf8_init(host_utf8, length(host), host, err)
 
-        global buffer = line_sender_buffer_new();
-        line_sender_buffer_reserve(buffer, 64 * 1024);        
+        buffer = line_sender_buffer_new()
+        line_sender_buffer_reserve(buffer, init_capacity)
 
-        if (is_host_ok)                                    
-            opts = line_sender_opts_new(host_utf8[], port[])                        
-          
-            if (tls)                
-                line_sender_opts_tls(opts);
-            end             
+        if (is_host_ok)
+            opts = line_sender_opts_new(host_utf8[], port[])
+
+            if (tls)
+                line_sender_opts_tls(opts)
+            end
 
             if (auth !== nothing)
                 println("Authenticating...")
                 line_sender_utf8_init(key_id_utf8, length(auth[1]), auth[1], err)
                 line_sender_utf8_init(priv_key_utf8, length(auth[2]), auth[2], err)
                 line_sender_utf8_init(pub_key_x_utf8, length(auth[3]), auth[3], err)
-                line_sender_utf8_init(pub_key_y_utf8, length(auth[4]), auth[4], err)        
-                line_sender_opts_auth(opts, key_id_utf8[], priv_key_utf8[], pub_key_x_utf8[], pub_key_y_utf8[])                                    
-            end        
-            
-            global sender = line_sender_connect(opts, err)                                                    
-            line_sender_opts_free(opts)        
-            
-            if (sender == C_NULL)                                
-                return error_handler(sender, buffer, err);           
-            end            
-        else            
-            error_handler(sender, buffer, err);           
-        end;
-                    
+                line_sender_utf8_init(pub_key_y_utf8, length(auth[4]), auth[4], err)
+                line_sender_opts_auth(opts, key_id_utf8[], priv_key_utf8[], pub_key_x_utf8[], pub_key_y_utf8[])
+            end
+
+            sender = line_sender_connect(opts, err)
+            line_sender_opts_free(opts)
+
+            if (sender == C_NULL)
+                return error_handler(sender, buffer, err)
+            end
+        else
+            error_handler(sender, buffer, err)
+        end
+
         s = new(host_utf8, port, key_id_utf8, priv_key_utf8, pub_key_x_utf8, pub_key_y_utf8, buffer, opts, err, sender, auth !== nothing)
+
+        # Register finalizer to clean up C resources
+        finalizer(s) do sender_obj
+            if sender_obj.buffer != C_NULL
+                line_sender_buffer_free(sender_obj.buffer)
+                sender_obj.buffer = C_NULL
+            end
+            if sender_obj.sender != C_NULL
+                line_sender_close(sender_obj.sender)
+                sender_obj.sender = C_NULL
+            end
+        end
+
         return s
     end
 end
 
-function Base.getproperty(s::Sender, f::Base.Symbol)    
-    if f == :table        
-        return Table(s)    
+function Base.getproperty(s::Sender, f::Base.Symbol)
+    if f == :table
+        return Table(s)
     elseif f == :column
         return Column(s)
     elseif f == :symbol
@@ -139,17 +152,17 @@ function Base.getproperty(s::Sender, f::Base.Symbol)
     return getfield(s, f)
 end
 
-function error_handler(sender::Ref{line_sender}, buffer::Ptr{line_sender_buffer}, err::Ref{Ptr{line_sender_error}})                
-    code = line_sender_error_get_code(err[]) 
+function error_handler(sender::Ptr{line_sender}, buffer::Ptr{line_sender_buffer}, err::Ref{Ptr{line_sender_error}})
+    code = line_sender_error_get_code(err[])
     len = Ref{Csize_t}(100)
-    message = line_sender_error_msg(err[], len)    
+    message = line_sender_error_msg(err[], len)
     println(unsafe_string(message, len[]))
-    
-    if (code == 0)        
-        error_message = "Error: Could not resolve address, Message: $(unsafe_string(message, len[]))"             
+
+    if (code == 0)
+        error_message = "Error: Could not resolve address, Message: $(unsafe_string(message, len[]))"
     elseif (code == 1)
         error_message = "Invalid API call, Message: $(unsafe_string(message, len[]))"
-    elseif (code == 2)        
+    elseif (code == 2)
         error_message = "Socket error, Message: $(unsafe_string(message, len[]))"
     elseif (code == 3)
         error_message = "Invalid UTF8, Message: $(unsafe_string(message, len[]))"
@@ -163,16 +176,20 @@ function error_handler(sender::Ref{line_sender}, buffer::Ptr{line_sender_buffer}
         error_message = "TLS error, Message: $(unsafe_string(message, len[]))"
     else
         error_message = "Unknown error, Message: $(unsafe_string(message, len[]))"
-    end    
+    end
 
-    line_sender_error_free(err[]);    
-    line_sender_buffer_free(buffer);
-    line_sender_close(sender);
-    throw(ErrorException(error_message))        
+    line_sender_error_free(err[])
+    if buffer != C_NULL
+        line_sender_buffer_free(buffer)
+    end
+    if sender != C_NULL
+        line_sender_close(sender)
+    end
+    throw(ErrorException(error_message))
 end
 
 function capacity(sender::Sender)
-    return line_sender_buffer_capacity(sender.buffer)    
+    return line_sender_buffer_capacity(sender.buffer)
 end
 
 
@@ -191,13 +208,13 @@ end
     sender.table("my_table", ["col1", "col2"], ["int", "string"])
     ```
 """
-function(table::Table)(name::String)
+function (table::Table)(name::String)
     sender = table.sender
-    table_name = line_sender_table_name_assert(length(name), name);                                         
-    line_sender_buffer_table(sender.buffer, table_name, sender.err);                        
-    
+    table_name = line_sender_table_name_assert(length(name), name)
+    line_sender_buffer_table(sender.buffer, table_name, sender.err)
+
     if (sender.err[] != C_NULL)
-        error_handler(sender.sender, sender.buffer, sender.err);           
+        error_handler(sender.sender, sender.buffer, sender.err)
     end
 
     sender
@@ -220,17 +237,17 @@ end
     ## Notes
     * The `column_value` must be a string. 
 """
-function(symbol::Symbol)(name::String, column_value::String)    
+function (symbol::Symbol)(name::String, column_value::String)
     sender = symbol.sender
-    col_name = line_sender_column_name_assert(length(name), name);
-    column_pointer = Ref{line_sender_utf8}();
-    
-    line_sender_utf8_init(column_pointer, length(column_value), column_value, sender.err);                           
-    line_sender_buffer_symbol(sender.buffer, col_name, column_pointer[], sender.err);
+    col_name = line_sender_column_name_assert(length(name), name)
+    column_pointer = Ref{line_sender_utf8}()
+
+    line_sender_utf8_init(column_pointer, length(column_value), column_value, sender.err)
+    line_sender_buffer_symbol(sender.buffer, col_name, column_pointer[], sender.err)
 
     if (sender.err[] != C_NULL)
-        return error_handler(sender.sender, sender.buffer, sender.err);           
-    end    
+        return error_handler(sender.sender, sender.buffer, sender.err)
+    end
     sender
 end
 
@@ -252,30 +269,30 @@ end
     ## Notes
     * The `column_value` must be a string, int64, float64, bool or a date. 
 """
-function(column::Column)(name::String, column_value::Union{String, Int64, Float64, Bool, Dates.Microsecond})
+function (column::Column)(name::String, column_value::Union{String,Int64,Float64,Bool,Dates.Microsecond})
     sender = column.sender
-    col_name = line_sender_column_name_assert(length(name), name);
-    column_pointer = Ref{line_sender_utf8}();        
+    col_name = line_sender_column_name_assert(length(name), name)
+    column_pointer = Ref{line_sender_utf8}()
 
     if column_value isa String
-        line_sender_utf8_init(column_pointer, length(column_value), column_value, sender.err);                           
-        line_sender_buffer_column_str(sender.buffer, col_name, column_pointer[], sender.err);
+        line_sender_utf8_init(column_pointer, length(column_value), column_value, sender.err)
+        line_sender_buffer_column_str(sender.buffer, col_name, column_pointer[], sender.err)
     elseif column_value isa Int64
-        line_sender_buffer_column_i64(sender.buffer, col_name, column_value, sender.err);                                        
+        line_sender_buffer_column_i64(sender.buffer, col_name, column_value, sender.err)
     elseif column_value isa Float64
-        line_sender_buffer_column_f64(sender.buffer, col_name, column_value, sender.err);                                        
+        line_sender_buffer_column_f64(sender.buffer, col_name, column_value, sender.err)
     elseif column_value isa Bool
-        line_sender_buffer_column_bool(sender.buffer, col_name, column_value, sender.err);                                                
+        line_sender_buffer_column_bool(sender.buffer, col_name, column_value, sender.err)
     elseif column_value isa Microsecond
-        ts = convert(Int64, Dates.value(column_value));            
-        line_sender_buffer_column_ts(sender.buffer, col_name, ts, sender.err);                        
+        ts = convert(Int64, Dates.value(column_value))
+        line_sender_buffer_column_ts(sender.buffer, col_name, ts, sender.err)
     else
-        throw("Unsupported type: $(typeof(column_value))");        
-    end;
+        throw("Unsupported type: $(typeof(column_value))")
+    end
 
     if (sender.err[] != C_NULL)
-        return error_handler(sender.sender, sender.buffer, sender.err);
-    end        
+        return error_handler(sender.sender, sender.buffer, sender.err)
+    end
     sender
 end
 
@@ -302,13 +319,13 @@ end
     sender.flush()
     ```
 """
-function(at::At)(ts::Dates.Nanosecond)    
+function (at::At)(ts::Dates.Nanosecond)
     sender = at.sender
-    ts = convert(Int64, Dates.value(ts));        
-    line_sender_buffer_at(sender.buffer, ts, sender.err);       
+    ts = convert(Int64, Dates.value(ts))
+    line_sender_buffer_at(sender.buffer, ts, sender.err)
 
     if (sender.err[] != C_NULL)
-        return error_handler(sender.sender, sender.buffer, sender.err);           
+        return error_handler(sender.sender, sender.buffer, sender.err)
     end
     sender
 end
@@ -330,12 +347,12 @@ end
     sender.flush()
     ```
 """
-function(at_now::AtNow)()    
+function (at_now::AtNow)()
     sender = at_now.sender
-    line_sender_buffer_at_now(sender.buffer, sender.err);       
+    line_sender_buffer_at_now(sender.buffer, sender.err)
 
     if (sender.err[] != C_NULL)
-        return error_handler(sender.sender, sender.buffer, sender.err);           
+        return error_handler(sender.sender, sender.buffer, sender.err)
     end
     sender
 end
@@ -349,23 +366,34 @@ end
     * The buffer is flushed automatically when the `Sender` object is garbage collected.
     * The buffer is flushed automatically when the `Sender` object is closed.
 """
-function(flush::Flush)()
-    println("Flushing...");
+function (flush::Flush)()
+    println("Flushing...")
     sender = flush.sender
-    line_sender_flush(sender.sender, sender.buffer, sender.err);    
-    if sender.err[] != C_NULL          
-        return error_handler(sender.sender, sender.buffer, sender.err);           
-    end;    
+    line_sender_flush(sender.sender, sender.buffer, sender.err)
+    if sender.err[] != C_NULL
+        return error_handler(sender.sender, sender.buffer, sender.err)
+    end
 end
 
 """
     Close the sender object.    
             
 """
-function(close::Close)()
-    println("Closing...");
+function (close::Close)()
+    println("Closing...")
     sender = close.sender
-    line_sender_close(sender.sender);
+
+    # Free buffer if not already freed
+    if sender.buffer != C_NULL
+        line_sender_buffer_free(sender.buffer)
+        sender.buffer = C_NULL
+    end
+
+    # Close sender connection
+    if sender.sender != C_NULL
+        line_sender_close(sender.sender)
+        sender.sender = C_NULL
+    end
 end
 
 export Sender, capacity
